@@ -1,40 +1,32 @@
 import argparse
 import logging
-from get_papers_list.fetch import fetch_papers
-from get_papers_list.export import export_to_csv
+from src.get_papers_list.fetch import fetch_papers
+from src.get_papers_list.export import export_to_csv
+
+logging.basicConfig(level=logging.INFO)
 
 def main():
-    # Set up argument parser
-    parser = argparse.ArgumentParser(
-        description="Fetch PubMed research papers and filter for non-academic authors."
-    )
-    parser.add_argument("query", type=str, help="Search query for PubMed")
-    parser.add_argument("-f", "--file", type=str, help="Output CSV file (default: print to console)", default="")
-    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode")
+    parser = argparse.ArgumentParser(description="Fetch research papers from PubMed.")
+    parser.add_argument("query", type=str, help="Search query for PubMed.")
+    parser.add_argument("-f", "--file", type=str, default="results.csv", help="Output CSV filename.")
+    parser.add_argument("-d", "--debug", action="store_true", help="Enable debug mode.")
 
-    # Parse command-line arguments
     args = parser.parse_args()
 
-    # Configure logging
-    log_level = logging.DEBUG if args.debug else logging.INFO
-    logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
 
     logging.info(f"Fetching papers for query: {args.query}")
-    
-    # Fetch papers
     papers = fetch_papers(args.query)
 
-    if args.debug:
-        logging.debug(f"Fetched {len(papers)} papers from PubMed.")
+    if not papers:
+        logging.warning("No papers found for the given query.")
+        return
 
-    # Export or print results
-    if args.file:
-        export_to_csv(papers, args.file)
-        logging.info(f"Results saved to {args.file}")
-    else:
-        print("Results:")
-        for paper in papers:
-            print(paper)
+    logging.debug(f"Fetched papers: {papers}")  # PRINT RESULTS FOR DEBUGGING
+
+    export_to_csv(papers, args.file)
+    logging.info(f"Results saved to {args.file}")
 
 if __name__ == "__main__":
     main()
